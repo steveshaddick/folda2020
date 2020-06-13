@@ -14,10 +14,16 @@ let halfCanvasHeight = canvasHeight / 2;
 
 let last = 0;
 let runningTime = 0;
+let currentDay = 1;
 let data = [];
 
 let earliestStart = 24;
 let longestDistance = 0;
+
+let imageData = null;
+let globalOpacity = 1;
+
+let devSpeed = 1;
 
 function tick(timestamp) {
   const elapsed = timestamp - last;
@@ -28,20 +34,44 @@ function tick(timestamp) {
   last = timestamp;
   const elapsedAdjust = (elapsed > 24) ? elapsed / 16 : 1;
 
-  runningTime += elapsed * 400;
+  runningTime += elapsed * 350 * devSpeed;
   if ((runningTime > 11425000) && (runningTime < 18500000)) {
     runningTime = 18500000;
   }
+  // New day
   if (runningTime > 86400000) {
     runningTime = 0;
+    currentDay += 1;
     for (var i=0, len=data.length; i<len; i++) {
+      if (data[i].isDone) {
+        data[i].day = currentDay;
+      }
       data[i].isDone = false;
+      /*if (data[i].isFade) {
+        data[i].isFade = false;
+        data[i].opacity = 1;
+        data[i].currentDistance = 0;
+      }*/
     }
+
+    /*imageData = new Image();
+    imageData.src = canvas.toDataURL();
+    globalOpacity = 1;*/
   }
   const twentyFourTime = runningTime / 3600000;
   const twelveHourTime = twentyFourTime >= 12 ? twentyFourTime - 12 : twentyFourTime;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  /*if (imageData && (globalOpacity > 0)) {
+    ctx.globalAlpha = globalOpacity;
+    ctx.drawImage(imageData, 0, 0);
+    ctx.globalAlpha = 1;
+
+    globalOpacity = globalOpacity - (0.0002 * elapsedAdjust * devSpeed);
+    if (globalOpacity <= 0) {
+      globalOpacity = 0;
+    }
+  }*/
   //console.log(twelveHourTime, runningTime);
   
   for (var i=0, len=data.length; i<len; i++) {
@@ -57,6 +87,7 @@ function tick(timestamp) {
       colour2,
       skewDistance,
       currentSkew,
+      day,
       opacity,
       isMoving,
       isFade,
@@ -77,15 +108,21 @@ function tick(timestamp) {
     let _needDraw = !isDone && (isMoving || isFade);
     let _opacity = opacity;
 
-    if (!isMoving && !isDone) {
-      if (twentyFourTime >= start) {
+    if (twentyFourTime >= start) {
+      if (!isMoving && !isDone && !isFade) {
         currentData.isMoving = true;
+        _needDraw = true;
+        //console.log('activate!', i, twentyFourTime, currentData);
+      }
+      if (isDone && (day < currentDay)) {
+        currentData.isDone = false;
+        currentData.day = currentDay;
         _needDraw = true;
       }
     }
 
     if (isFade) {
-      _opacity = opacity - (0.0002 * elapsedAdjust);
+      _opacity = opacity - (0.0002 * elapsedAdjust * devSpeed);
       currentData.opacity = _opacity;
       if (_opacity <= 0) {
         currentData.opacity = 1;
@@ -98,12 +135,16 @@ function tick(timestamp) {
       }
     }
 
+    /*if (i == 6) {
+      console.log(twentyFourTime, currentDistance, opacity, isMoving, isFade, isDone);
+    }*/
+
     if (_needDraw) {
       let width = 0;
       let height = 0;
       currentData.isMoving = true;
 
-      currentDistance += (1 / (pace * 24)) * elapsedAdjust; 
+      currentDistance += (1 / (pace * 24)) * elapsedAdjust * devSpeed; 
       
       if (currentDistance >= distance) {
         currentDistance = distance;
@@ -249,10 +290,15 @@ const main = (function() {
       isFade: false,
       isMoving: false,
       isDone: false,
+      day: 1,
       point1: null,
       point2: null,
       point3: null,
       point4: null
+    }
+
+    if (isNaN(dataItem.skewDistance )) {
+      dataItem.skewDistance = 0;
     }
 
     if (dataItem.distance > longestDistance) {
@@ -271,6 +317,8 @@ const main = (function() {
   }
 
   runningTime = (earliestStart * 60 * 60 * 1000) - 10000;
+
+  //console.log(data);
 
   // run!
   window.requestAnimationFrame(tick);
