@@ -82,7 +82,7 @@ function tick(timestamp) {
     }
 
     if (isFade) {
-      _opacity = opacity - (0.005 * elapsedAdjust);
+      _opacity = opacity - (0.0004 * elapsedAdjust);
       currentData.opacity = _opacity;
       if (_opacity <= 0) {
         currentData.opacity = 1;
