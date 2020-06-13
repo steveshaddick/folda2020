@@ -29,6 +29,9 @@ function tick(timestamp) {
   const elapsedAdjust = (elapsed > 24) ? elapsed / 16 : 1;
 
   runningTime += elapsed * 400;
+  if ((runningTime > 11425000) && (runningTime < 18500000)) {
+    runningTime = 18500000;
+  }
   if (runningTime > 86400000) {
     runningTime = 0;
     for (var i=0, len=data.length; i<len; i++) {
@@ -39,7 +42,7 @@ function tick(timestamp) {
   const twelveHourTime = twentyFourTime >= 12 ? twentyFourTime - 12 : twentyFourTime;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  //console.log(twelveHourTime);
+  //console.log(twelveHourTime, runningTime);
   
   for (var i=0, len=data.length; i<len; i++) {
     let currentData = data[i];
